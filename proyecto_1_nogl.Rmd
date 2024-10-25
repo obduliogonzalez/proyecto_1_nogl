@@ -1,0 +1,358 @@
+---
+title: "Proyecto 1"
+output: html_Proyecto_1_nogl
+---
+
+```{r}
+install.packages("arules")        # Para Apriori
+install.packages("arulesViz")     # Para visualizar reglas
+install.packages("arulesSequences") # Para FP-Growth no dejo instalarlo
+install.packages("dplyr")         # Para manipulación de datos
+install.packages("ggplot2")       # Para gráficos
+install.packages("factoextra")    # Para gráficos de clúster
+install.packages("cluster")       # Para K-means
+install.packages("readr")         # Para leer datos
+install.packages("tidyverse")     # Paquete general de manipulación de datos
+install.packages("readxl")
+```
+
+```{r}
+
+library(readxl)
+
+
+# Cargar el archivo XLS o XLSX
+dataset <- read_excel("C:\\proy1\\bdgeneral.xlsx")
+
+# Ver las primeras filas del dataset
+head(dataset)
+
+# Explorar la estructura del dataset
+str(dataset)
+
+
+```
+```{r}
+
+#Eliminar o reemplazar valores nulos
+dataset <- dataset[complete.cases(dataset), ]
+
+# Mostrar los nombres de las columnas del dataset
+colnames(dataset)
+
+# Entender el contenido es clave para saber qué variables utilizar en los análisis posteriores
+summary(dataset)
+
+
+
+```
+```{r}
+library(arules)
+
+reglas <- apriori(dataset, parameter = list(support = 0.2, confidence = 0.5))
+
+
+
+
+```
+
+```{r}
+
+datos <- dataset
+# Crear una columna adicional para evaluar la regla
+# Verifica si Muni_boleta está en el rango [101, 805)
+datos$Muni_in_range <- with(datos, Muni_boleta >= 101 & Muni_boleta < 805)
+
+# Verifica si Grupo_étnico_inf está en el rango [2, 9]
+datos$Grupo_in_range <- with(datos, Grupo_étnico_inf >= 2 & Grupo_étnico_inf <= 9)
+
+# Calcular el soporte de ambas condiciones
+support_Muni <- mean(datos$Muni_in_range)
+support_Grupo <- mean(datos$Grupo_in_range)
+
+# Calcular el soporte de la combinación de ambas condiciones
+support_both <- mean(datos$Muni_in_range & datos$Grupo_in_range)
+
+# Calcular la confianza de la regla
+confidence <- support_both / support_Muni
+
+# Calcular el levante (lift)
+lift <- confidence / support_Grupo
+
+# Calcular la convicción (conviction)
+conviction <- (1 - support_Grupo) / (1 - confidence)
+
+# Mostrar resultados
+cat("Support Muni_boleta in [101, 805):", support_Muni, "\n")
+cat("Support Grupo_étnico_inf in [2, 9]:", support_Grupo, "\n")
+cat("Support both conditions:", support_both, "\n")
+cat("Confidence:", confidence, "\n")
+cat("Lift:", lift, "\n")
+cat("Conviction:", conviction, "\n")
+
+```
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Assuming your data is in a data frame called 'data'
+# Replace 'data' with the name of your actual dataset
+
+# Plotting using ggplot2
+ggplot(datos, aes(x = factor(Mes_boleta), y = Edad_inf, fill = factor(Sexo_inf))) +
+  geom_boxplot() +
+  labs(
+    title = "Comparison of Edad_inf by Mes_boleta and Sexo_inf",
+    x = "Mes_boleta (Month)",
+    y = "Edad_inf (Age)",
+    fill = "Sexo_inf (Sex)"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+# Carga la librería necesaria
+library(ggplot2)
+
+# Graficar usando ggplot2
+ggplot(data = datos, aes(x = factor(Año_boleta), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Depto_boleta) +
+  labs(
+    title = "Relación entre Año, Departamento y Sexo",
+    x = "Año",
+    y = "Cantidad de casos",
+    fill = "Sexo (1: Hombre, 2: Mujer)"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Cargar la librería necesaria
+library(ggplot2)
+
+# Graficar la relación entre Falta, Departamento y Sexo
+ggplot(data = datos, aes(x = factor(Falta_inf), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Depto_boleta) +
+  labs(
+    title = "Relación entre Clase de Falta, Departamento y Sexo",
+    x = "Clase de Falta",
+    y = "Cantidad de casos",
+    fill = "Sexo (1: Hombre, 2: Mujer)"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+datos <- dataset
+# Selecciona las columnas que vas a analizar para reglas de asociación
+# Por ejemplo, supongamos que estamos usando las variables: Sexo_inf, Depto_boleta, Falta_inf, Edad_inf
+datos_subset <- datos[, c("Sexo_inf", "Depto_boleta", "Falta_inf", "Edad_inf")]
+
+# Convierte las variables seleccionadas en factores (categorías) si es necesario
+datos_subset$Sexo_inf <- as.factor(datos_subset$Sexo_inf)
+datos_subset$Depto_boleta <- as.factor(datos_subset$Depto_boleta)
+datos_subset$Falta_inf <- as.factor(datos_subset$Falta_inf)
+datos_subset$Edad_inf <- as.factor(datos_subset$Edad_inf)
+
+# Convertir los datos en formato de transacciones
+transacciones <- as(datos_subset, "transactions")
+
+# Resumen de las transacciones
+summary(transacciones)
+
+```
+```{r}
+# Aplicar el algoritmo FP-Growth
+# Ajusta los parámetros de soporte mínimo (minSupport) y confianza mínima (minConfidence) según los requisitos
+reglas <- apriori(
+  transacciones,
+  parameter = list(supp = 0.01, conf = 0.5, target = "rules")
+)
+
+# Visualizar un resumen de las reglas encontradas
+summary(reglas)
+
+# Visualizar las 10 reglas más significativas ordenadas por confianza
+inspect(head(sort(reglas, by = "confidence"), 10))
+
+```
+```{r}
+# Filtra las reglas que tengan un soporte mínimo de 0.02 y un lift mayor a 1.2
+reglas_interesantes <- subset(
+  reglas,
+  subset = support > 0.02 & lift > 1.2
+)
+
+# Ver las reglas filtradas
+inspect(reglas_interesantes)
+
+```
+```{r}
+# Visualizar 4 reglas seleccionadas
+inspect(head(sort(reglas_interesantes, by = "lift"), 4))
+
+```
+
+```{r}
+# Instala y carga la librería arulesViz para visualización
+install.packages("arulesViz")
+library(arulesViz)
+
+# Visualizar las reglas en un gráfico
+plot(reglas_interesantes, method = "graph", control = list(type = "items"))
+
+```
+```{r}
+
+# Selecciona las columnas que vas a analizar para reglas de asociación
+# Por ejemplo, supongamos que vamos a usar: Sexo_inf, Depto_boleta, Falta_inf, Edad_inf
+datos_subset2 <- datos[, c("Sexo_inf", "Depto_boleta", "Falta_inf", "Edad_inf")]
+
+# Convierte las variables seleccionadas en factores (categorías) si es necesario
+datos_subset2$Sexo_inf <- as.factor(datos_subset2$Sexo_inf)
+datos_subset2$Depto_boleta <- as.factor(datos_subset2$Depto_boleta)
+datos_subset2$Falta_inf <- as.factor(datos_subset2$Falta_inf)
+datos_subset2$Edad_inf <- as.factor(datos_subset2$Edad_inf)
+
+# Convertir los datos en formato de transacciones
+transacciones2 <- as(datos_subset2, "transactions")
+
+# Resumen de las transacciones
+summary(transacciones2)
+
+```
+```{r}
+# Aplicar el algoritmo Apriori
+# Ajusta los parámetros de soporte mínimo (supp) y confianza mínima (conf) según los requisitos
+reglas_apriori <- apriori(
+  transacciones2,
+  parameter = list(supp = 0.01, conf = 0.5)
+)
+
+# Visualizar un resumen de las reglas encontradas
+summary(reglas_apriori)
+
+# Mostrar las 10 reglas más significativas ordenadas por confianza
+inspect(head(sort(reglas_apriori, by = "confidence"), 10))
+
+```
+```{r}
+# Filtra las reglas que tengan un soporte mínimo de 0.02 y un lift mayor a 1.2
+reglas_interesantes_apriori <- subset(
+  reglas_apriori,
+  subset = support > 0.02 & lift > 1.2
+)
+
+# Ver las reglas filtradas
+inspect(reglas_interesantes_apriori)
+
+```
+```{r}
+# Visualizar 4 reglas seleccionadas
+inspect(head(sort(reglas_interesantes_apriori, by = "lift"), 4))
+
+```
+
+```{r}
+# Visualización en gráfico de las reglas
+plot(reglas_interesantes_apriori, method = "graph", control = list(type = "items"))
+
+```
+```{r}
+# Instalar librerías si no están instaladas
+install.packages("tidyverse")   # Para manipulación y visualización de datos
+install.packages("cluster")     # Para el análisis de clúster
+install.packages("factoextra")  # Para visualización del clúster
+
+# Cargar librerías
+library(tidyverse)
+library(cluster)
+library(factoextra)
+
+```
+
+```{r}
+
+# Selecciona las columnas que deseas incluir en el análisis de clúster
+# Supongamos que vamos a usar: Edad_inf, Depto_boleta, Falta_inf
+datos_cluster <- datos[, c("Edad_inf", "Depto_boleta", "Falta_inf")]
+
+# Verifica los datos seleccionados
+summary(datos_cluster)
+
+```
+
+```{r}
+# Normalización de los datos (si es necesario)
+datos_cluster_scaled <- scale(datos_cluster)
+
+# Verificar los datos escalados
+summary(datos_cluster_scaled)
+
+```
+
+```{r}
+library(dplyr)
+library(factoextra)
+
+# Convertir la matriz a data frame de forma explícita
+datos_cluster_df <- as.data.frame(datos_cluster_scaled)
+
+# Verificar que datos_cluster_df es realmente un data frame
+print(class(datos_cluster_df))
+
+# Crear una muestra del 10% de los datos
+set.seed(123) # Para reproducibilidad
+datos_cluster_sample <- datos_cluster_df %>% sample_frac(0.1)
+
+# Método del codo en la muestra
+fviz_nbclust(datos_cluster_sample, kmeans, method = "wss") + 
+  labs(title = "Número óptimo de clústeres - Método del Codo")
+
+
+```
+```{r}
+# Aplicar el algoritmo K-Means con el número óptimo de clústeres (por ejemplo, si fue 4 clústeres)
+set.seed(123) # Para reproducibilidad
+num_clusters <- 4 # Reemplaza este número con el número óptimo de clústeres encontrado
+kmeans_result <- kmeans(datos_cluster_scaled, centers = num_clusters, nstart = 25)
+
+# Ver los resultados del K-Means
+print(kmeans_result)
+
+```
+```{r}
+# Visualizar los clústeres generados
+fviz_cluster(kmeans_result, data = datos_cluster_scaled,
+             geom = "point", ellipse.type = "norm") +
+  labs(title = "Visualización de Clústeres K-Means")
+
+```
+```{r}
+# Agregar el clúster asignado a los datos originales
+datos_cluster_df$cluster <- as.factor(kmeans_result$cluster)
+
+# Calcular estadísticas descriptivas por clúster
+library(dplyr)
+resumen_por_cluster <- datos_cluster_df %>% 
+  group_by(cluster) %>% 
+  summarise_all(list(mean = mean, sd = sd))
+
+# Mostrar el resumen
+print(resumen_por_cluster)
+
+```
+```{r}
+# Boxplot de una variable por clúster, por ejemplo, Edad_inf
+ggplot(datos_cluster_df, aes(x = cluster, y = Edad_inf)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Edad por Clúster", x = "Clúster", y = "Edad") +
+  theme_minimal()
+
+```
+
