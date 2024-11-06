@@ -92,22 +92,24 @@ cat("Conviction:", conviction, "\n")
 
 ```
 ```{r}
-# Load necessary libraries
 library(ggplot2)
 
-# Assuming your data is in a data frame called 'data'
-# Replace 'data' with the name of your actual dataset
-
-# Plotting using ggplot2
+# Asegúrate de que 'datos' sea el nombre correcto de tu dataset
 ggplot(datos, aes(x = factor(Mes_boleta), y = Edad_inf, fill = factor(Sexo_inf))) +
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA) +  # Ocultar valores atípicos para centrarse en el rango común
+  scale_y_continuous(limits = c(0, 100)) +  # Ajustar el límite del eje y para un rango de edad razonable
   labs(
-    title = "Comparison of Edad_inf by Mes_boleta and Sexo_inf",
-    x = "Mes_boleta (Month)",
-    y = "Edad_inf (Age)",
-    fill = "Sexo_inf (Sex)"
+    title = "Distribución de Edad por Mes de Boleta y Sexo",
+    x = "Mes de Boleta",
+    y = "Edad",
+    fill = "Sexo"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Girar las etiquetas del eje x
+    legend.position = "top"  # Colocar la leyenda en la parte superior
+  )
 
 ```
 ```{r}
@@ -116,17 +118,69 @@ library(ggplot2)
 
 # Graficar usando ggplot2
 ggplot(data = datos, aes(x = factor(Año_boleta), fill = factor(Sexo_inf))) +
-  geom_bar(position = "dodge") +
-  facet_wrap(~ Depto_boleta) +
+  geom_bar(position = "dodge", color = "black") + # Añade bordes para separar las barras
+  facet_wrap(~ Depto_boleta, ncol = 4) +          # Organiza en 4 columnas para mejorar el ancho
   labs(
     title = "Relación entre Año, Departamento y Sexo",
     x = "Año",
     y = "Cantidad de casos",
     fill = "Sexo (1: Hombre, 2: Mujer)"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 12) +                 # Aumenta el tamaño de la fuente
+  theme(
+    strip.text = element_text(size = 10),         # Ajusta el tamaño del texto en los facetados
+    axis.text.x = element_text(angle = 45, hjust = 1) # Inclina los textos del eje X para evitar solapamiento
+  ) +
+  scale_fill_manual(values = c("#FF9999", "#66B2FF")) # Colores personalizados para facilitar la distinción entre sexos
+
 
 ```
+
+```{r}
+# Filtra o agrupa los datos según el mes si aún no lo tienes configurado
+# Suponiendo que tienes la columna `Mes_boleta` en los datos
+
+# Gráfica de relación entre Mes, Departamento y Sexo
+ggplot(data = datos, aes(x = factor(Mes_boleta), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge", color = "black") +
+  facet_wrap(~ Depto_boleta, ncol = 4) +
+  labs(
+    title = "Relación entre Mes, Departamento y Sexo",
+    x = "Mes",
+    y = "Cantidad de casos",
+    fill = "Sexo (1: Hombre, 2: Mujer)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  scale_fill_manual(values = c("#FF9999", "#66B2FF"))
+
+
+# Gráfica de relación entre Año, Departamento y Sexo
+ggplot(data = datos, aes(x = factor(Año_boleta), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge", color = "black") +
+  facet_wrap(~ Depto_boleta, ncol = 4) +
+  labs(
+    title = "Relación entre Año, Departamento y Sexo",
+    x = "Año",
+    y = "Cantidad de casos",
+    fill = "Sexo (1: Hombre, 2: Mujer)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  scale_fill_manual(values = c("#FF9999", "#66B2FF"))
+
+
+
+```
+
+
+
 
 ```{r}
 # Cargar la librería necesaria
@@ -496,91 +550,9 @@ ggplot(subset(data, Falta_inf == 1), aes(x = Cond_alfabetismo_inf, fill = Área_
 ```
 
 
-```{r}
-# Cargar las librerías necesarias
-library(arules)
-library(arulesViz)
-
-# Supongamos que tienes tus datos en un data frame llamado "datos" y has transformado a "transacciones" previamente
-
-# Verifica los nombres de las columnas en el conjunto de datos original
-colnames(datos)
-
-# Muestra las transacciones y sus items únicos
-inspect(transacciones[1:5]) # Ver las primeras 5 transacciones
-itemLabels(transacciones)    # Ver los nombres de los items en las transacciones
-
-# Convierte todas las columnas a factores (si aún no están en formato de factor)
-datos[] <- lapply(datos, as.factor)
-
-# Convierte a transacciones
-transacciones <- as(datos, "transactions")
-
-
-# Aplica Apriori con el valor correcto para `Niv_escolaridad_inf`
-reglas_edad_escolaridad <- apriori(transacciones, 
-                                   parameter = list(supp = 0.01, conf = 0.6, minlen = 2), 
-                                   appearance = list(lhs = c("Edad_inf=20-29"), rhs = "Niv_escolaridad_inf=Secundaria"),
-                                   control = list(verbose=FALSE))
-
-# Inspecciona y visualiza las reglas encontradas
-inspect(head(sort(reglas_edad_escolaridad, by = "lift"), 10))
-plot(reglas_edad_escolaridad, method="graph", measure="lift", shading="confidence")
-
-
-```
 
 
 ```{r}
-library(arules)
-
-
-# Verifica los valores únicos en las columnas PEI3 y PEI4
-unique(columnas_necesarias$PEI3)
-unique(columnas_necesarias$PEI4)
-
-reglas <- apriori(transacciones, 
-                  parameter = list(supp = 0.01, conf = 0.5, minlen = 2),
-                  appearance = list(lhs = c("PEI3=20"), rhs = "PEI4=1"),
-                  control = list(verbose=FALSE))
-
-# Inspecciona las reglas generadas
-inspect(head(sort(reglas, by = "lift"), 10))
-
-# Visualización opcional de las reglas
-plot(reglas, method="graph", measure="lift", shading="confidence")
-
+data2 <- dataset
 
 ```
-
-
-```{r}
-library(arules)
-
-# Convierte las columnas a tipo factor para que arules pueda manejarlas
-datos$DEPARTAMENTO <- as.factor(datos$DEPARTAMENTO)
-datos$MUNICIPIO <- as.factor(datos$MUNICIPIO)
-
-
-
-# Selecciona solo las columnas necesarias
-datos_geo <- datos[, c("DEPARTAMENTO", "MUNICIPIO")]
-datos_geo[] <- lapply(datos_geo, as.factor)  # Convertir a factores
-
-# Convierte a transacciones
-transacciones_geo <- as(datos_geo, "transactions")
-
-# Revisa los items en las transacciones
-itemLabels(transacciones_geo)
-
-
-reglas_geo <- apriori(transacciones_geo, 
-                      parameter = list(supp = 0.005, conf = 0.5, minlen = 2),
-                      appearance = list(lhs = "DEPARTAMENTO=X", rhs = "MUNICIPIO=Y"),
-                      control = list(verbose = FALSE))
-
-inspect(head(sort(reglas_geo, by = "lift"), 10))
-
-
-```
-
