@@ -356,3 +356,90 @@ ggplot(datos_cluster_df, aes(x = cluster, y = Edad_inf)) +
 
 ```
 
+
+
+
+```{r}
+# Convertir columnas numéricas a factores (si es necesario)
+dataset$Mes_boleta <- as.factor(dataset$Mes_boleta)
+dataset$Falta_inf <- as.factor(dataset$Falta_inf)
+dataset$Año_boleta <- as.factor(dataset$Año_boleta)
+dataset$Edad_inf <- as.factor(cut(dataset$Edad_inf, breaks = c(0, 19, 29, 39, 49, 59, 69, 100), 
+                                  labels = c("0-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70+")))
+
+```
+
+
+```{r}
+# Aplicar el algoritmo Apriori
+rules <- apriori(data = dataset, 
+                 parameter = list(support = 0.01, confidence = 0.5))
+
+# Resumen de las reglas generadas
+summary(rules)
+
+# Visualizar las reglas principales ordenadas por confianza
+inspect(sort(rules, by = "confidence")[1:10])
+
+```
+
+
+
+```{r}
+# Filtrar reglas que contengan el tipo de falta y el mes específicos
+specific_rules <- subset(rules, lhs %pin% "Falta_inf=1" & lhs %pin% "Mes_boleta=1")
+
+# Visualizar las reglas específicas
+inspect(sort(specific_rules, by = "confidence")[1:10])
+
+```
+
+```{r}
+library(arulesViz)
+# Visualizar las reglas con arulesViz
+plot(specific_rules, method = "graph", control = list(type = "items"))
+
+```
+
+```{r}
+# Filtrar los datos para los meses y faltas específicos
+data_filtered <- subset(dataset, Mes_boleta %in% c(1, 10, 11) & Falta_inf == 1)
+
+```
+
+
+
+```{r}
+# Convertir las columnas necesarias a factores si no lo están
+data_filtered$Edad_inf <- as.factor(data_filtered$Edad_inf)
+data_filtered$Año_boleta <- as.factor(data_filtered$Año_boleta)
+
+# Cargar la librería ggplot2 para gráficos
+library(ggplot2)
+
+# Gráfico de barras para la Edad
+ggplot(data_filtered, aes(x = Edad_inf)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de Edad para Falta_inf = 1 en Meses 1, 10, y 11",
+       x = "Edad", y = "Frecuencia") +
+  theme_minimal()
+
+# Gráfico de barras para el Año de la Boleta
+ggplot(data_filtered, aes(x = Año_boleta)) +
+  geom_bar(fill = "coral") +
+  labs(title = "Distribución de Año de Boleta para Falta_inf = 1 en Meses 1, 10, y 11",
+       x = "Año de Boleta", y = "Frecuencia") +
+  theme_minimal()
+
+```
+
+```{r}
+# Gráfico de dispersión para Edad vs. Año de Boleta
+ggplot(data_filtered, aes(x = Año_boleta, y = Edad_inf)) +
+  geom_jitter(color = "purple", width = 0.2, height = 0.2) +
+  labs(title = "Edad vs Año de Boleta para Falta_inf = 1 en Meses 1, 10, y 11",
+       x = "Año de Boleta", y = "Edad") +
+  theme_minimal()
+
+```
+
