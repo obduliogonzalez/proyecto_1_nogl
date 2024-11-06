@@ -443,3 +443,144 @@ ggplot(data_filtered, aes(x = Año_boleta, y = Edad_inf)) +
 
 ```
 
+```{r}
+# Cargar las bibliotecas
+library(arules)
+library(arulesViz)
+library(ggplot2)
+
+# Cargar el conjunto de datos 
+data <- dataset
+
+
+# Convertir las columnas relevantes a factores para el análisis de asociaciones
+data$Depto_boleta <- as.factor(data$Depto_boleta)
+data$Niv_escolaridad_inf <- as.factor(data$Niv_escolaridad_inf)
+data$Cond_alfabetismo_inf <- as.factor(data$Cond_alfabetismo_inf)
+data$Falta_inf <- as.factor(data$Falta_inf)
+data$Área_geo_inf <- as.factor(data$Área_geo_inf)
+
+# Crear transacciones a partir del conjunto de datos
+transacciones <- as(data, "transactions")
+
+# Aplicar el algoritmo Apriori para encontrar patrones de interés
+reglas <- apriori(transacciones, 
+                  parameter = list(supp = 0.01, conf = 0.5, minlen = 2), 
+                  appearance = list(default="lhs", rhs="Falta_inf=1"),
+                  control = list(verbose=FALSE))
+
+# Filtrar reglas de interés (por ejemplo, que incluyan Nivel de Escolaridad y Condición de Alfabetización)
+reglas_interes <- subset(reglas, lhs %pin% "Niv_escolaridad_inf" & lhs %pin% "Cond_alfabetismo_inf")
+
+# Ordenar reglas por lift para destacar las asociaciones más fuertes
+reglas_ordenadas <- sort(reglas_interes, by="lift", decreasing=TRUE)
+
+# Visualizar las reglas en una gráfica de red
+plot(reglas_ordenadas, method="graph", measure="lift", shading="support")
+
+# Visualización de infracciones por departamento y nivel de escolaridad
+ggplot(data, aes(x = Depto_boleta, fill = Niv_escolaridad_inf)) + 
+  geom_bar(position = "dodge") +
+  labs(title = "Distribución de Infracciones por Departamento y Nivel de Escolaridad",
+       x = "Departamento de la Boleta", y = "Frecuencia") +
+  theme_minimal()
+
+# Visualización de Condición de Alfabetización en infracciones tipo 1
+ggplot(subset(data, Falta_inf == 1), aes(x = Cond_alfabetismo_inf, fill = Área_geo_inf)) + 
+  geom_bar(position = "dodge") +
+  labs(title = "Condición de Alfabetización en Infracciones de Tipo 1 por Área Geográfica",
+       x = "Condición de Alfabetización", y = "Frecuencia") +
+  theme_minimal()
+
+
+```
+
+
+```{r}
+# Cargar las librerías necesarias
+library(arules)
+library(arulesViz)
+
+# Supongamos que tienes tus datos en un data frame llamado "datos" y has transformado a "transacciones" previamente
+
+# Verifica los nombres de las columnas en el conjunto de datos original
+colnames(datos)
+
+# Muestra las transacciones y sus items únicos
+inspect(transacciones[1:5]) # Ver las primeras 5 transacciones
+itemLabels(transacciones)    # Ver los nombres de los items en las transacciones
+
+# Convierte todas las columnas a factores (si aún no están en formato de factor)
+datos[] <- lapply(datos, as.factor)
+
+# Convierte a transacciones
+transacciones <- as(datos, "transactions")
+
+
+# Aplica Apriori con el valor correcto para `Niv_escolaridad_inf`
+reglas_edad_escolaridad <- apriori(transacciones, 
+                                   parameter = list(supp = 0.01, conf = 0.6, minlen = 2), 
+                                   appearance = list(lhs = c("Edad_inf=20-29"), rhs = "Niv_escolaridad_inf=Secundaria"),
+                                   control = list(verbose=FALSE))
+
+# Inspecciona y visualiza las reglas encontradas
+inspect(head(sort(reglas_edad_escolaridad, by = "lift"), 10))
+plot(reglas_edad_escolaridad, method="graph", measure="lift", shading="confidence")
+
+
+```
+
+
+```{r}
+library(arules)
+
+
+# Verifica los valores únicos en las columnas PEI3 y PEI4
+unique(columnas_necesarias$PEI3)
+unique(columnas_necesarias$PEI4)
+
+reglas <- apriori(transacciones, 
+                  parameter = list(supp = 0.01, conf = 0.5, minlen = 2),
+                  appearance = list(lhs = c("PEI3=20"), rhs = "PEI4=1"),
+                  control = list(verbose=FALSE))
+
+# Inspecciona las reglas generadas
+inspect(head(sort(reglas, by = "lift"), 10))
+
+# Visualización opcional de las reglas
+plot(reglas, method="graph", measure="lift", shading="confidence")
+
+
+```
+
+
+```{r}
+library(arules)
+
+# Convierte las columnas a tipo factor para que arules pueda manejarlas
+datos$DEPARTAMENTO <- as.factor(datos$DEPARTAMENTO)
+datos$MUNICIPIO <- as.factor(datos$MUNICIPIO)
+
+
+
+# Selecciona solo las columnas necesarias
+datos_geo <- datos[, c("DEPARTAMENTO", "MUNICIPIO")]
+datos_geo[] <- lapply(datos_geo, as.factor)  # Convertir a factores
+
+# Convierte a transacciones
+transacciones_geo <- as(datos_geo, "transactions")
+
+# Revisa los items en las transacciones
+itemLabels(transacciones_geo)
+
+
+reglas_geo <- apriori(transacciones_geo, 
+                      parameter = list(supp = 0.005, conf = 0.5, minlen = 2),
+                      appearance = list(lhs = "DEPARTAMENTO=X", rhs = "MUNICIPIO=Y"),
+                      control = list(verbose = FALSE))
+
+inspect(head(sort(reglas_geo, by = "lift"), 10))
+
+
+```
+
