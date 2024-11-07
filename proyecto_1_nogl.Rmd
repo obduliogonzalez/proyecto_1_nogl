@@ -200,6 +200,354 @@ ggplot(data = datos, aes(x = factor(Falta_inf), fill = factor(Sexo_inf))) +
 
 ```
 
+
+```{r}
+# Cargar la librería necesaria
+library(ggplot2)
+
+# Mejorar la gráfica de la relación entre Falta, Departamento y Sexo
+ggplot(data = datos, aes(x = factor(Falta_inf), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Depto_boleta) +
+  labs(
+    title = "Relación entre Clase de Falta, Departamento y Sexo",
+    x = "Clase de Falta",
+    y = "Cantidad de Casos",
+    fill = "Sexo (1: Hombre, 2: Mujer)"
+  ) +
+  scale_fill_manual(values = c("#1f77b4", "#ff7f0e"), labels = c("Hombre", "Mujer")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+```
+
+
+```{r}
+colnames(datos)
+# Gráfica de la relación entre Departamento, Nivel de Escolaridad y Año
+ggplot(data = datos, aes(x = factor(Depto_boleta), fill = factor(Niv_escolaridad_inf))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Año_boleta) +
+  labs(
+    title = "Relación entre Departamento, Nivel de Escolaridad y Año",
+    x = "Departamento",
+    y = "Cantidad de Casos",
+    fill = "Nivel de Escolaridad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+
+```
+```{r}
+# Gráfico de líneas para mostrar el cambio entre años
+ggplot(data = datos, aes(x = Año_boleta, y = ..count.., color = factor(Niv_escolaridad_inf), group = Niv_escolaridad_inf)) +
+  geom_line(stat = "count") +
+  facet_wrap(~ Depto_boleta, scales = "free_y") +
+  labs(
+    title = "Cambio en la Cantidad de Casos por Nivel de Escolaridad y Departamento a lo Largo de los Años",
+    x = "Año",
+    y = "Cantidad de Casos",
+    color = "Nivel de Escolaridad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+```
+
+
+```{r}
+# Gráfico de puntos para mostrar la distribución de Nivel de Escolaridad por Departamento y Año
+ggplot(data = datos, aes(x = factor(Año_boleta), y = factor(Depto_boleta), color = factor(Niv_escolaridad_inf))) +
+  geom_jitter(width = 0.2, height = 0.2, size = 2, alpha = 0.7) +
+  labs(
+    title = "Distribución de Niveles de Escolaridad por Departamento y Año",
+    x = "Año de Boleta",
+    y = "Departamento",
+    color = "Nivel de Escolaridad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+
+```
+
+```{r}
+# Cargar la librería dplyr
+library(dplyr)
+
+# Encontrar el nivel de escolaridad con mayor frecuencia
+nivel_mas_frecuente <- datos %>%
+  count(Niv_escolaridad_inf) %>%
+  arrange(desc(n)) %>%
+  slice(1) %>%
+  pull(Niv_escolaridad_inf)
+
+# Filtrar los datos para mostrar solo el nivel de escolaridad más frecuente
+datos_filtrados <- datos %>% filter(Niv_escolaridad_inf == nivel_mas_frecuente)
+
+# Graficar solo el nivel de escolaridad más frecuente
+ggplot(data = datos_filtrados, aes(x = factor(Año_boleta), y = factor(Depto_boleta), color = factor(Niv_escolaridad_inf))) +
+  geom_jitter(width = 0.2, height = 0.2, size = 2, alpha = 0.7) +
+  labs(
+    title = paste("Distribución del Nivel de Escolaridad más Frecuente (", nivel_mas_frecuente, ") por Departamento y Año", sep = ""),
+    x = "Año de Boleta",
+    y = "Departamento",
+    color = "Nivel de Escolaridad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none"  # Oculta la leyenda si es solo un nivel
+  )
+
+```
+
+```{r}
+# Cargar la librería dplyr
+library(dplyr)
+
+# Calcular el nivel de escolaridad más frecuente en cada departamento y año
+datos_resaltados <- datos %>%
+  group_by(Depto_boleta, Año_boleta) %>%
+  mutate(Nivel_mas_frecuente = Niv_escolaridad_inf == names(sort(table(Niv_escolaridad_inf), decreasing = TRUE)[1])) 
+
+# Graficar, resaltando el nivel más frecuente en cada combinación de departamento y año
+ggplot(data = datos_resaltados, aes(x = factor(Año_boleta), y = factor(Depto_boleta), color = factor(Niv_escolaridad_inf), size = Nivel_mas_frecuente)) +
+  geom_jitter(width = 0.2, height = 0.2, alpha = 0.7) +
+  scale_size_manual(values = c(2, 4)) +  # Resalta los puntos más frecuentes con un tamaño mayor
+  labs(
+    title = "Distribución de Niveles de Escolaridad por Departamento y Año (Resaltando los más frecuentes)",
+    x = "Año de Boleta",
+    y = "Departamento",
+    color = "Nivel de Escolaridad"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+
+```
+
+
+```{r}
+# Gráfica de la relación entre Sexo, Nivel de Escolaridad y Año
+ggplot(data = datos, aes(x = factor(Sexo_inf), fill = factor(Niv_escolaridad_inf))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Año_boleta) +
+  labs(
+    title = "Relación entre Sexo, Nivel de Escolaridad y Año",
+    x = "Sexo (1: Hombre, 2: Mujer)",
+    y = "Cantidad de Casos",
+    fill = "Nivel de Escolaridad"
+  ) +
+  scale_x_discrete(labels = c("1" = "Hombre", "2" = "Mujer")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+
+```
+
+```{r}
+# Gráfica de la relación entre Sexo, Departamento y Año
+ggplot(data = datos, aes(x = factor(Sexo_inf), fill = factor(Sexo_inf))) +
+  geom_bar(position = "dodge") +
+  facet_grid(Depto_boleta ~ Año_boleta) +
+  labs(
+    title = "Cantidad de Casos por Departamento, Año y Sexo",
+    x = "Sexo (1: Hombre, 2: Mujer)",
+    y = "Cantidad de Casos",
+    fill = "Sexo"
+  ) +
+  scale_fill_manual(values = c("1" = "#1f77b4", "2" = "#ff7f0e"), labels = c("Hombre", "Mujer")) +
+  scale_x_discrete(labels = c("1" = "Hombre", "2" = "Mujer")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+```
+```{r}
+# Gráfico de barras apiladas para mostrar cantidad de casos por departamento, año y sexo
+ggplot(data = datos, aes(x = factor(Año_boleta), y = ..count.., fill = factor(Sexo_inf))) +
+  geom_bar(position = "fill", stat = "count") +
+  facet_wrap(~ Depto_boleta) +
+  labs(
+    title = "Proporción de Casos por Departamento, Año y Sexo",
+    x = "Año de Boleta",
+    y = "Proporción de Casos",
+    fill = "Sexo"
+  ) +
+  scale_fill_manual(values = c("1" = "#1f77b4", "2" = "#ff7f0e"), labels = c("Hombre", "Mujer")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+```
+
+
+```{r}
+# Instalar arules si no lo tienes
+if(!require(arules)) install.packages("arules", dependencies=TRUE)
+library(arules)
+# Convertir el data.frame a formato transaccional
+datos_trans <- as(datos, "transactions")
+
+
+# Ejecutar el algoritmo Apriori
+reglas <- apriori(datos_trans, parameter = list(supp = 0.01, conf = 0.8))
+
+# Mostrar las primeras 10 reglas generadas
+inspect(head(reglas, n = 10))
+
+# Ordenar las reglas por lift y mostrar las primeras 10
+reglas_ordenadas <- sort(reglas, by = "lift", decreasing = TRUE)
+inspect(head(reglas_ordenadas, n = 10))
+
+```
+
+```{r}
+# Instalar y cargar tidyr si no está instalado
+if(!require(tidyr)) install.packages("tidyr", dependencies=TRUE)
+library(tidyr)
+
+# Convertir transactions a un data.frame que contenga cada transacción como texto
+datos_df <- as(datos, "data.frame")
+
+# Usar tidyr para separar los items en columnas individuales
+library(tidyr)
+datos_df <- datos_df %>%
+  separate(items, 
+           into = c("Depto_boleta", "Muni_boleta", "Mes_boleta", "Año_boleta", 
+                    "Falta_inf", "Sexo_inf", "Edad_inf", "Grupo_étnico_inf",
+                    "Est_conyugal_inf", "Nacimiento_inf", "Cond_alfabetismo_inf",
+                    "Niv_escolaridad_inf", "G_primarios", "Área_geo_inf",
+                    "Est_ebriedad_inf", "g_edad_80ymás", "g_edad_60ymás",
+                    "edad_quinquenales", "Depto_nacimiento_inf", "Nacionalidad_inf",
+                    "Subg_principales", "Gran_grupos", "Muni_in_range", "Grupo_in_range"),
+           sep = ",", extra = "drop", fill = "right")
+
+# Limpiar los nombres para eliminar cualquier símbolo adicional
+library(dplyr)
+datos_df <- datos_df %>%
+  mutate(across(everything(), ~ gsub("[{}]", "", .))) %>%
+  mutate(across(everything(), ~ gsub("=.*", "", .)))
+
+
+```
+
+```{r}
+# Filtrar los datos para los meses de interés y subgrupo específico
+datos_patron <- datos_df %>%
+  filter(Mes_boleta >= 1 & Mes_boleta < 4, Subg_principales >= 11 & Subg_principales <= 61)
+
+# Crear una columna para indicar si cumple con Gran_grupos=[1,6)
+datos_patron <- datos_patron %>%
+  mutate(Cumple_Gran_grupos = ifelse(Gran_grupos >= 1 & Gran_grupos <= 6, "Sí", "No"))
+
+# Graficar la frecuencia de cumplimiento del patrón
+library(ggplot2)
+
+ggplot(data = datos_patron, aes(x = Mes_boleta, fill = Cumple_Gran_grupos)) +
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Cumplimiento de Gran_grupos=[1,6) para Subg_principales=[11,61) en Meses 1 a 4",
+    x = "Mes",
+    y = "Cantidad de Casos",
+    fill = "Cumple Gran_grupos=[1,6)"
+  ) +
+  scale_fill_manual(values = c("Sí" = "#1f77b4", "No" = "#ff7f0e")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+
+```
+
+```{r}
+colnames(datos_df)
+
+```
+
+
+```{r}
+# Instalar y cargar la librería arules si aún no está instalada
+if (!require(arules)) install.packages("arules")
+library(arules)
+
+# Convertir el data.frame a transacciones, asegurando que todas las columnas son factores
+datos_df[] <- lapply(datos_df, as.factor)
+datos_trans <- as(datos_df, "transactions")
+
+# Aplicar el algoritmo Apriori para obtener conjuntos de elementos frecuentes
+frequent_itemsets <- apriori(datos_trans, parameter = list(supp = 0.01, target = "frequent itemsets"))
+
+# Ver los primeros resultados
+inspect(frequent_itemsets[1:10])
+# Filtrar los conjuntos de elementos que contienen los atributos de interés
+patron_interes <- subset(frequent_itemsets, items %in% "Mes_boleta=[1,4)" & items %in% "Subg_principales=[11,61)")
+
+# Inspeccionar el patrón específico
+inspect(patron_interes)
+
+
+
+
+```
+```{r}
+
+
+```
+
+
 ```{r}
 
 datos <- dataset
@@ -257,8 +605,26 @@ inspect(head(sort(reglas_interesantes, by = "lift"), 4))
 install.packages("arulesViz")
 library(arulesViz)
 
-# Visualizar las reglas en un gráfico
-plot(reglas_interesantes, method = "graph", control = list(type = "items"))
+# Ajustar y guardar el gráfico en PNG
+#png("grafico_reglas.png", width = 2000, height = 1500, res = 300)
+
+# Crear el gráfico sin los parámetros no reconocidos
+plot(
+  reglas_interesantes,
+  method = "graph",
+  control = list(
+    layout = "stress",          # Usar "stress" si "fruchtermanreingold" no está disponible
+    circular = FALSE,
+    colors = c("#EE0000FF", "#EEEEEEFF"),
+    max = 100                    # Limitar la cantidad de reglas mostradas
+  ),
+  shading = "lift"
+)
+
+# Cerrar el dispositivo gráfico para guardar el archivo
+dev.off()
+
+
 
 ```
 ```{r}
@@ -342,6 +708,18 @@ summary(datos_cluster)
 ```
 
 ```{r}
+# Paso 1: Limpiar los Datos
+# Filtrar valores atípicos en Edad_inf
+datos_cluster <- datos_cluster %>%
+  filter(Edad_inf <= 100)
+
+
+```
+
+
+
+
+```{r}
 # Normalización de los datos (si es necesario)
 datos_cluster_scaled <- scale(datos_cluster)
 
@@ -369,7 +747,29 @@ fviz_nbclust(datos_cluster_sample, kmeans, method = "wss") +
   labs(title = "Número óptimo de clústeres - Método del Codo")
 
 
+
+
 ```
+
+```{r}
+fviz_nbclust(datos_cluster_sample, kmeans, method = "silhouette") +
+  labs(title = "Número óptimo de clústeres - Método de la Silueta")
+
+```
+
+```{r}
+set.seed(123)  # Para reproducibilidad
+kmeans_result <- kmeans(datos_cluster_scaled, centers = 4, nstart = 25)
+
+# Visualizar los clústeres
+fviz_cluster(kmeans_result, data = datos_cluster_scaled) +
+  labs(title = "Visualización de Clústeres con K-Means (k = 4)")
+
+```
+
+
+
+
 ```{r}
 # Aplicar el algoritmo K-Means con el número óptimo de clústeres (por ejemplo, si fue 4 clústeres)
 set.seed(123) # Para reproducibilidad
@@ -387,6 +787,16 @@ fviz_cluster(kmeans_result, data = datos_cluster_scaled,
   labs(title = "Visualización de Clústeres K-Means")
 
 ```
+
+```{r}
+# Mostrar los centros de cada clúster
+print(kmeans_result$centers)
+
+```
+
+
+
+
 ```{r}
 # Agregar el clúster asignado a los datos originales
 datos_cluster_df$cluster <- as.factor(kmeans_result$cluster)
@@ -411,6 +821,75 @@ ggplot(datos_cluster_df, aes(x = cluster, y = Edad_inf)) +
 ```
 
 
+```{r}
+# Boxplot de Edad por Clúster mejorado
+ggplot(datos_cluster_df, aes(x = factor(cluster), y = Edad_inf, fill = factor(cluster))) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2) +
+  labs(title = "Distribución de Edad por Clúster", x = "Clúster", y = "Edad") +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none"
+  )
+
+```
+
+
+```{r}
+# Gráfico de violín para visualizar la distribución de Edad_inf por clúster
+ggplot(datos_cluster_df, aes(x = factor(cluster), y = Edad_inf, fill = factor(cluster))) +
+  geom_violin(trim = FALSE, color = "black") +
+  labs(title = "Distribución de Edad por Clúster", x = "Clúster", y = "Edad") +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none"
+  )
+
+```
+
+
+
+```{r}
+# Gráfico de puntos con jitter para visualizar la distribución de Edad_inf por clúster
+ggplot(datos_cluster_df, aes(x = factor(cluster), y = Edad_inf, color = factor(cluster))) +
+  geom_jitter(width = 0.2, size = 2, alpha = 0.6) +
+  labs(title = "Distribución de Edad por Clúster (Jitter)", x = "Clúster", y = "Edad") +
+  scale_color_brewer(palette = "Set3") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none"
+  )
+
+```
+
+
+
+```{r}
+# Gráfico de densidad de Edad_inf separado por clúster
+ggplot(datos_cluster_df, aes(x = Edad_inf, fill = factor(cluster))) +
+  geom_density(alpha = 0.6) +
+  facet_wrap(~ cluster) +
+  labs(title = "Densidad de Edad por Clúster", x = "Edad", y = "Densidad") +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.position = "none"
+  )
+
+```
 
 
 ```{r}
