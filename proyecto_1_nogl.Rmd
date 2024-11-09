@@ -753,6 +753,163 @@ inspect(reglas_patron2_ajustadas)
 ```
 
 
+```{r}
+library(arules)
+library(arulesViz)
+# Crear un DataFrame ficticio para el análisis del Patrón 3
+data_patron3 <- data.frame(
+  Genero_masculino = c(1, 0, 1, 1, 0, 1, 1, 0, 0, 1),
+  Genero_femenino = c(0, 1, 0, 0, 1, 0, 0, 1, 1, 0),
+  Edad_20_29 = c(1, 1, 0, 0, 1, 0, 1, 0, 1, 1),
+  Edad_30_39 = c(0, 0, 1, 1, 0, 1, 0, 1, 0, 0),
+  Edad_40_49 = c(0, 0, 1, 0, 0, 0, 0, 1, 0, 1),
+  Anio_2013 = c(1, 0, 1, 1, 0, 1, 1, 0, 0, 1),
+  Anio_2014 = c(0, 1, 0, 0, 1, 0, 0, 1, 1, 0)
+)
+
+# Convertir el DataFrame en un conjunto de transacciones
+transacciones_patron3 <- as(data_patron3, "transactions")
+summary(transacciones_patron3)
+
+# Generar reglas utilizando Apriori
+reglas_patron3 <- apriori(
+  transacciones_patron3, 
+  parameter = list(support = 0.3, confidence = 0.6)
+)
+
+# Mostrar un resumen de las reglas generadas
+inspect(reglas_patron3)
+
+
+
+```
+
+
+```{r}
+# Visualizar las reglas en un gráfico de dispersión
+plot(
+  reglas_patron3, 
+  method = "scatter", 
+  measure = c("support", "confidence"), 
+  shading = "lift"
+)
+
+# Visualizar las reglas en un gráfico de matriz
+plot(
+  reglas_patron3, 
+  method = "matrix", 
+  measure = "support", 
+  shading = "confidence"
+)
+
+```
+
+```{r}
+# Gráfico de Coordenadas Paralelas
+plot(
+  reglas_patron3, 
+  method = "paracoord", 
+  control = list(reorder = TRUE)
+)
+
+# Gráfico de Mosaico
+plot(
+  reglas_patron3, 
+  method = "mosaic", 
+  measure = "support", 
+  shading = "confidence"
+)
+
+```
+
+
+```{r}
+# Crear un DataFrame ficticio para el análisis del Patrón 4
+data_patron4 <- data.frame(
+  Depto_Capital = c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0),
+  Depto_Interior = c(0, 1, 0, 1, 0, 0, 1, 1, 0, 1),
+  Edad_20_29 = c(1, 1, 0, 0, 1, 0, 1, 0, 1, 1),
+  Edad_30_39 = c(0, 0, 1, 1, 0, 1, 0, 1, 0, 0),
+  Edad_40_49 = c(0, 0, 1, 0, 0, 0, 0, 1, 0, 1),
+  Anio_2013 = c(1, 0, 1, 1, 0, 1, 1, 0, 0, 1),
+  Anio_2014 = c(0, 1, 0, 0, 1, 0, 0, 1, 1, 0)
+)
+
+# Convertir el DataFrame en un conjunto de transacciones
+transacciones_patron4 <- as(data_patron4, "transactions")
+summary(transacciones_patron4)
+
+# Generar reglas utilizando Apriori
+reglas_patron4 <- apriori(
+  transacciones_patron4, 
+  parameter = list(support = 0.3, confidence = 0.6)
+)
+
+# Mostrar un resumen de las reglas generadas
+inspect(reglas_patron4)
+
+```
+
+
+```{r}
+# Ajustar los umbrales de soporte y confianza para generar más reglas
+reglas_patron4_ajustadas <- apriori(
+  transacciones_patron4, 
+  parameter = list(support = 0.1, confidence = 0.4)
+)
+
+# Mostrar un resumen de las reglas generadas
+inspect(reglas_patron4_ajustadas)
+
+# Visualizar el gráfico de dispersión (Scatter Plot)
+plot(
+  reglas_patron4_ajustadas, 
+  method = "scatter", 
+  measure = c("support", "confidence"), 
+  shading = "lift"
+)
+
+
+
+```
+
+
+```{r}
+
+
+# Visualizar las reglas en un gráfico de coordenadas paralelas
+plot(
+  reglas_patron4_ajustadas, 
+  method = "paracoord", 
+  control = list(reorder = TRUE)
+)
+
+
+
+
+```
+
+```{r}
+# Generar un gráfico de burbuja emulando un scatter plot con tamaño de punto basado en lift
+plot(
+  reglas_patron4_ajustadas, 
+  method = "scatter", 
+  measure = c("support", "confidence"), 
+  shading = "lift", 
+  control = list(jitter = 0, col = rainbow(10))
+)
+
+# Gráfico de Barras agrupadas para ver las reglas ordenadas por confianza
+plot(
+  reglas_patron4_ajustadas, 
+  method = "bar", 
+  measure = "confidence", 
+  shading = "lift"
+)
+
+
+```
+
 
 ```{r}
 # Filtra las reglas que tengan un soporte mínimo de 0.02 y un lift mayor a 1.2
