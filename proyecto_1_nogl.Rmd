@@ -57,6 +57,85 @@ reglas <- apriori(dataset, parameter = list(support = 0.2, confidence = 0.5))
 ```
 
 ```{r}
+library(ggplot2)
+# Crear el DataFrame basado en tu patrón descrito
+df <- data.frame(
+  Mes = c('Enero', 'Enero', 'Octubre', 'Octubre', 'Noviembre', 'Noviembre', 
+          'Enero', 'Enero', 'Octubre', 'Octubre', 'Noviembre', 'Noviembre'),
+  Año = c(2013, 2014, 2013, 2014, 2013, 2014, 
+          2013, 2014, 2013, 2014, 2013, 2014),
+  GrupoEdad = c('20-29', '30-39', '20-29', '30-39', '20-29', '30-39', 
+                '20-29', '30-39', '20-29', '30-39', '20-29', '30-39'),
+  Falta_inf = c(120, 80, 140, 100, 150, 110, 125, 85, 145, 105, 155, 115),
+  Alfabetismo = c(7, 8, 6, 9, 7, 8, 7, 8, 6, 9, 7, 8),
+  Nacionalidad = c(1, 2, 1, 3, 2, 1, 1, 2, 1, 3, 2, 1)
+)
+
+```
+
+```{r}
+library(ggplot2)
+
+# Cargar los datos (utilizando tu dataset si es necesario)
+df <- data.frame(
+  Mes = c('Enero', 'Enero', 'Octubre', 'Octubre', 'Noviembre', 'Noviembre'),
+  Año = c(2013, 2014, 2013, 2014, 2013, 2014),
+  Falta_inf = c(120, 80, 140, 100, 150, 110)
+)
+
+# Crear el gráfico mejorado
+ggplot(df, aes(x = Mes, y = Falta_inf, fill = factor(Año))) +
+  geom_bar(stat = "identity", position = "stack", color = "white", width = 0.7) +
+  scale_fill_manual(values = c("#F4A261", "#E76F51")) +  # Colores similares al gráfico en Python
+  labs(
+    title = "Infracciones por Mes y Año",
+    x = "Mes",
+    y = "Número de Infracciones",
+    fill = "Año"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
+    legend.title = element_text(face = "bold"),
+    panel.grid.major = element_line(size = 0.5, color = "gray"),
+    panel.grid.minor = element_blank()
+  )
+
+
+```
+
+
+```{r}
+# Gráfico de barras para infracciones por grupo de edad
+ggplot(df, aes(x = GrupoEdad, y = Falta_inf)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Infracciones por Grupo de Edad",
+       x = "Grupo de Edad",
+       y = "Número de Infracciones") +
+  theme_minimal()
+
+```
+
+
+
+```{r}
+# Gráfico de líneas para la relación entre alfabetismo, nacionalidad y número de infracciones
+ggplot(df, aes(x = Alfabetismo, y = Falta_inf, group = 1)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "blue", size = 3) +
+  geom_line(aes(x = Nacionalidad), color = "red", size = 1) +
+  geom_point(aes(x = Nacionalidad), color = "red", size = 3) +
+  labs(title = "Relación entre Escolaridad, Nacionalidad y Número de Infracciones",
+       x = "Valores",
+       y = "Número de Infracciones") +
+  theme_minimal()
+
+```
+
+
+
+```{r}
 
 datos <- dataset
 # Crear una columna adicional para evaluar la regla
@@ -583,6 +662,98 @@ summary(reglas)
 inspect(head(sort(reglas, by = "confidence"), 10))
 
 ```
+
+
+```{r}
+library(arules)
+library(arulesViz)
+# Crear un DataFrame ficticio en R
+data <- data.frame(
+  Edad_20_39 = c(1, 0, 1, 0, 1, 1, 0, 1, 1, 0),
+  Infraccion_enero = c(1, 0, 1, 1, 0, 1, 0, 1, 1, 1),
+  Infraccion_octubre = c(0, 1, 0, 1, 1, 0, 0, 1, 0, 1),
+  Infraccion_noviembre = c(1, 0, 0, 1, 1, 0, 1, 1, 0, 0),
+  Anio_2013 = c(1, 1, 0, 0, 1, 1, 1, 0, 1, 1),
+  Alfabetismo_rango_1_9 = c(1, 0, 1, 1, 0, 1, 1, 0, 1, 0),
+  Nacionalidad_rango_1_9 = c(1, 1, 1, 0, 1, 0, 1, 1, 0, 0)
+)
+
+# Convertir a una transacción tipo arules
+transacciones <- as(data, "transactions")
+summary(transacciones)
+
+# Generar reglas con Apriori
+reglas <- apriori(transacciones, parameter = list(support = 0.3, confidence = 0.6))
+inspect(reglas)
+
+library(arulesViz)
+plot(reglas, method = "graph", control = list(type = "items"))
+
+
+```
+
+
+```{r}
+library(arules)
+library(arulesViz)
+
+# Crear un DataFrame ficticio para el análisis del Patrón 2
+data_patron2 <- data.frame(
+  Infraccion_tipo2_enero = c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0),
+  Infraccion_tipo2_octubre = c(0, 1, 0, 1, 1, 0, 1, 1, 0, 1),
+  Infraccion_tipo2_noviembre = c(1, 1, 0, 0, 1, 0, 1, 0, 1, 0),
+  Anio_2013 = c(1, 0, 1, 1, 0, 1, 1, 0, 0, 1),
+  Anio_2014 = c(0, 1, 0, 0, 1, 0, 1, 1, 1, 0),
+  Genero_masculino = c(1, 1, 0, 0, 1, 1, 1, 0, 1, 0),
+  Genero_femenino = c(0, 0, 1, 1, 0, 0, 0, 1, 0, 1)
+)
+
+# Convertir el DataFrame en un conjunto de transacciones
+transacciones_patron2 <- as(data_patron2, "transactions")
+summary(transacciones_patron2)
+
+# Generar las reglas utilizando Apriori
+reglas_patron2 <- apriori(transacciones_patron2, parameter = list(support = 0.3, confidence = 0.6))
+inspect(reglas_patron2)
+
+library(arulesViz)
+
+# Visualizar las reglas utilizando un gráfico de red
+plot(reglas_patron2, method = "graph", control = list(type = "items"))
+
+
+
+```
+
+```{r}
+# Visualizar las reglas en un gráfico de matriz
+plot(reglas_patron2, method = "matrix", measure = "support", shading = "confidence")
+
+# Ajustar los umbrales de soporte y confianza para generar más reglas
+reglas_patron2_ajustadas <- apriori(
+  transacciones_patron2, 
+  parameter = list(support = 0.1, confidence = 0.5)
+)
+
+# Visualizar el gráfico de dispersión con las reglas ajustadas
+plot(
+  reglas_patron2_ajustadas, 
+  method = "scatter", 
+  measure = c("support", "confidence"), 
+  shading = "lift"
+)
+
+# Mostrar un resumen de las reglas generadas para confirmar
+inspect(reglas_patron2_ajustadas)
+
+
+
+
+
+```
+
+
+
 ```{r}
 # Filtra las reglas que tengan un soporte mínimo de 0.02 y un lift mayor a 1.2
 reglas_interesantes <- subset(
